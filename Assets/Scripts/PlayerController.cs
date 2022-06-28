@@ -8,6 +8,8 @@ public class PlayerController : MonoBehaviour
     private static readonly int Failing = Animator.StringToHash("falling");
     private static readonly int Crouching = Animator.StringToHash("crouching");
 
+    private ScoreController _scoreController;
+    
     private Rigidbody2D _rb;
     private BoxCollider2D _box;
     private Animator _animator;
@@ -16,14 +18,14 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed;
     public float jumpForce;
 
-    private static int Cherry = 0;
-
 
     private void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
         _box = GetComponent<BoxCollider2D>();
         _animator = GetComponent<Animator>();
+
+        _scoreController = FindObjectOfType<ScoreController>();
     }
 
     // Update is called once per frame
@@ -103,7 +105,7 @@ public class PlayerController : MonoBehaviour
         if (collision.CompareTag("Collections"))
         {
             Destroy(collision.gameObject);
-            Cherry++;
+            _scoreController.AddScore(1);
         }
     }
 }
