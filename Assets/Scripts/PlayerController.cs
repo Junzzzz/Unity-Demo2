@@ -7,9 +7,10 @@ public class PlayerController : MonoBehaviour
     private static readonly int Jumping = Animator.StringToHash("jumping");
     private static readonly int Failing = Animator.StringToHash("falling");
     private static readonly int Crouching = Animator.StringToHash("crouching");
+    private static readonly int Hurt = Animator.StringToHash("hurt");
 
     private ScoreController _scoreController;
-    
+
     private Rigidbody2D _rb;
     private BoxCollider2D _box;
     private Animator _animator;
@@ -106,6 +107,30 @@ public class PlayerController : MonoBehaviour
         {
             Destroy(collision.gameObject);
             _scoreController.AddScore(1);
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Enemies"))
+        {
+            var velocity = _rb.velocity;
+            if (_animator.GetBool(Failing))
+            {
+                Destroy(collision.gameObject);
+                velocity.y = jumpForce * Time.deltaTime;
+                // 跳跃
+                _animator.SetBool(Failing, false);
+                _animator.SetBool(Jumping, true);
+            }
+            else
+            {
+                _animator.SetTrigger(Hurt);
+                velocity.y = jumpForce * 0.2f * Time.deltaTime;
+            }
+
+            _rb.velocity = velocity;
+
         }
     }
 }
