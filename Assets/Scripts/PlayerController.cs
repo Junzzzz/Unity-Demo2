@@ -18,7 +18,7 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundMask;
     public float moveSpeed;
     public float jumpForce;
-
+    private bool _hurting;
 
     private void Start()
     {
@@ -32,7 +32,10 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        PlayerMove();
+        if (!_hurting)
+        {
+            PlayerMove();
+        }
     }
 
     private void PlayerMove()
@@ -112,12 +115,13 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Enemies"))
+        var target = collision.gameObject;
+        if (target.CompareTag("Enemies"))
         {
             var velocity = _rb.velocity;
             if (_animator.GetBool(Failing))
             {
-                Destroy(collision.gameObject);
+                Destroy(target);
                 velocity.y = jumpForce * Time.deltaTime;
                 // 跳跃
                 _animator.SetBool(Failing, false);
@@ -126,11 +130,17 @@ public class PlayerController : MonoBehaviour
             else
             {
                 _animator.SetTrigger(Hurt);
+                _hurting = true;
+                velocity.x = (target.transform.localPosition.x > _rb.position.x ? -1 : 1) * moveSpeed * 0.2f * Time.deltaTime;
                 velocity.y = jumpForce * 0.2f * Time.deltaTime;
             }
 
             _rb.velocity = velocity;
-
         }
+    }
+
+    public void EndHurting()
+    {
+        _hurting = false;
     }
 }
