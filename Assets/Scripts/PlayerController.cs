@@ -80,16 +80,16 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (jump && velocity.y < 0)
+        switch (fall)
         {
-            _animator.SetBool(Jumping, false);
-            _animator.SetBool(Failing, true);
+            case false when velocity.y < 0 && Math.Abs(velocity.y) > 0.001:
+                _animator.SetBool(Jumping, false);
+                _animator.SetBool(Failing, true);
+                break;
+            case true when Math.Abs(velocity.y) < 0.001:
+                _animator.SetBool(Failing, false);
+                break;
         }
-        else if (fall && Math.Abs(velocity.y) < 0.001)
-        {
-            _animator.SetBool(Failing, false);
-        }
-
 
         _rb.velocity = velocity;
     }
@@ -131,7 +131,8 @@ public class PlayerController : MonoBehaviour
             {
                 _animator.SetTrigger(Hurt);
                 _hurting = true;
-                velocity.x = (target.transform.localPosition.x > _rb.position.x ? -1 : 1) * moveSpeed * 0.2f * Time.deltaTime;
+                velocity.x = (target.transform.localPosition.x > _rb.position.x ? -1 : 1) * moveSpeed * 0.2f *
+                             Time.deltaTime;
                 velocity.y = jumpForce * 0.2f * Time.deltaTime;
             }
 
