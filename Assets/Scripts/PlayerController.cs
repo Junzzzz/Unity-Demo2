@@ -82,11 +82,11 @@ public class PlayerController : MonoBehaviour
 
         switch (fall)
         {
-            case false when velocity.y < 0 && Math.Abs(velocity.y) > 0.001:
+            case false when velocity.y < 0 && Math.Abs(velocity.y) > 2:
                 _animator.SetBool(Jumping, false);
                 _animator.SetBool(Failing, true);
                 break;
-            case true when Math.Abs(velocity.y) < 0.001:
+            case true when Math.Abs(velocity.y) < 2:
                 _animator.SetBool(Failing, false);
                 break;
         }
@@ -121,7 +121,7 @@ public class PlayerController : MonoBehaviour
             var velocity = _rb.velocity;
             if (_animator.GetBool(Failing))
             {
-                Destroy(target);
+                target.GetComponent<Enemy>().Death();
                 velocity.y = jumpForce * Time.deltaTime;
                 // 跳跃
                 _animator.SetBool(Failing, false);
