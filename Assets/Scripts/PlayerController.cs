@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     private Animator _animator;
 
     public LayerMask groundMask;
+    public AudioSource bgm, jumpSound, hurtSound, hitSound, collectSound;
     public float moveSpeed;
     public float jumpForce;
     private bool _hurting;
@@ -43,16 +44,16 @@ public class PlayerController : MonoBehaviour
         var horizontal = Input.GetAxis("Horizontal");
         var velocity = _rb.velocity;
 
-        // 玩家移动 & 跳跃
+        // 玩家移动
         if (horizontal != 0)
         {
             var horizontalRaw = Math.Sign(horizontal);
-            velocity.x = moveSpeed * horizontal * Time.deltaTime;
-
             transform.localScale = new Vector3(horizontalRaw, 1, 1);
-            // 移动动画
-            _animator.SetFloat(Running, Math.Abs(horizontal));
+            velocity.x = moveSpeed * horizontal * Time.deltaTime;
         }
+
+        // 移动动画
+        _animator.SetFloat(Running, Math.Abs(horizontal));
 
         var jump = _animator.GetBool(Jumping);
         var fall = _animator.GetBool(Failing);
@@ -63,6 +64,7 @@ public class PlayerController : MonoBehaviour
             {
                 velocity.y = jumpForce * Time.deltaTime;
                 // 跳跃状态切换
+                jumpSound.Play();
                 _animator.SetBool(Jumping, true);
             }
             else if (Input.GetButton("Crouch"))
@@ -82,11 +84,13 @@ public class PlayerController : MonoBehaviour
 
         switch (fall)
         {
-            case false when velocity.y < 0 && Math.Abs(velocity.y) > 2:
+            case false when (jump && velocity.y <= 0.02f) || (!jump && velocity.y < -2):
+                SwitchCrouch(false);
+                _animator.SetBool(Crouching, false);
                 _animator.SetBool(Jumping, false);
                 _animator.SetBool(Failing, true);
                 break;
-            case true when Math.Abs(velocity.y) < 2:
+            case true when velocity.y > -0.02f:
                 _animator.SetBool(Failing, false);
                 break;
         }
@@ -109,6 +113,7 @@ public class PlayerController : MonoBehaviour
         if (collision.CompareTag("Collections"))
         {
             Destroy(collision.gameObject);
+            collectSound.Play();
             _scoreController.AddScore(1);
         }
     }
@@ -121,6 +126,8 @@ public class PlayerController : MonoBehaviour
             var velocity = _rb.velocity;
             if (_animator.GetBool(Failing))
             {
+                // 击败敌人
+                hitSound.Play();
                 target.GetComponent<Enemy>().Death();
                 velocity.y = jumpForce * Time.deltaTime;
                 // 跳跃
@@ -129,10 +136,11 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
+                // 玩家受伤
+                hurtSound.Play();
                 _animator.SetTrigger(Hurt);
                 _hurting = true;
-                velocity.x = (target.transform.localPosition.x > _rb.position.x ? -1 : 1) * moveSpeed * 0.2f *
-                             Time.deltaTime;
+                velocity.x = (target.transform.localPosition.x > _rb.position.x ? -1 : 1) * moveSpeed * Time.deltaTime;
                 velocity.y = jumpForce * 0.2f * Time.deltaTime;
             }
 
