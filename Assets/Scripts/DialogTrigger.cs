@@ -3,11 +3,13 @@ using UnityEngine;
 public class DialogTrigger : MonoBehaviour
 {
     public string text;
+    public bool status { get; private set; }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.CompareTag("Player"))
         {
+            status = true;
             DialogController.Instance.Open(text);
         }
     }
@@ -16,6 +18,7 @@ public class DialogTrigger : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
+            status = false;
             DialogController.Instance.Close(text);
         }
     }
