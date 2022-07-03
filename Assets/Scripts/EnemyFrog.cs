@@ -9,7 +9,6 @@ public class EnemyFrog : Enemy
     public float moveSpeed;
     public float jumpForce;
 
-    private Rigidbody2D _rb;
     private float _leftX;
     private float _rightX;
 
@@ -19,7 +18,6 @@ public class EnemyFrog : Enemy
     protected override void Start()
     {
         base.Start();
-        _rb = GetComponent<Rigidbody2D>();
 
         var left = transform.GetChild(0);
         var right = transform.GetChild(1);
@@ -38,13 +36,7 @@ public class EnemyFrog : Enemy
 
         _idleCount = 0;
     }
-
-    private void FixedUpdate()
-    {
-        Movement();
-    }
-
-    private void Movement()
+    protected override void Movement()
     {
         var isJumping = Animator.GetBool(Jumping);
         var isFalling = Animator.GetBool(Falling);
@@ -52,11 +44,11 @@ public class EnemyFrog : Enemy
         // 判断是否停止移动
         if (!isJumping && !isFalling && _idleCount > 0)
         {
-            _rb.velocity = new Vector2(0, 0);
+            Rb.velocity = new Vector2(0, 0);
             return;
         }
 
-        var posX = _rb.position.x;
+        var posX = Rb.position.x;
 
         float direction;
 
@@ -76,7 +68,7 @@ public class EnemyFrog : Enemy
             direction = -transform.localScale.x;
         }
 
-        var velocity = _rb.velocity;
+        var velocity = Rb.velocity;
         velocity.x = direction * moveSpeed;
 
         // 跳跃 降落
@@ -102,7 +94,7 @@ public class EnemyFrog : Enemy
             RandomIdleCount();
         }
 
-        _rb.velocity = velocity;
+        Rb.velocity = velocity;
     }
 
     private void CompleteAnimationLoop()

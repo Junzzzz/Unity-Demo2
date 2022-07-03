@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -8,8 +9,6 @@ public class PlayerController : MonoBehaviour
     private static readonly int Failing = Animator.StringToHash("falling");
     private static readonly int Crouching = Animator.StringToHash("crouching");
     private static readonly int Hurt = Animator.StringToHash("hurt");
-
-    private ScoreController _scoreController;
 
     private Rigidbody2D _rb;
     private BoxCollider2D _box;
@@ -20,6 +19,7 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed;
     public float jumpForce;
     private bool _hurting;
+    private float _deadLineY;
 
     private void Start()
     {
@@ -27,7 +27,7 @@ public class PlayerController : MonoBehaviour
         _box = GetComponent<BoxCollider2D>();
         _animator = GetComponent<Animator>();
 
-        _scoreController = FindObjectOfType<ScoreController>();
+        _deadLineY = transform.childCount > 0 ? transform.GetChild(0).position.y : float.MinValue;
     }
 
     // Update is called once per frame
@@ -37,6 +37,8 @@ public class PlayerController : MonoBehaviour
         {
             PlayerMove();
         }
+
+        CheckDeath();
     }
 
     private void PlayerMove()
@@ -49,7 +51,7 @@ public class PlayerController : MonoBehaviour
         {
             var horizontalRaw = Math.Sign(horizontal);
             transform.localScale = new Vector3(horizontalRaw, 1, 1);
-            velocity.x = moveSpeed * horizontal * Time.deltaTime;
+            velocity.x = moveSpeed * horizontal * Time.fixedDeltaTime;
         }
 
         // 移动动画
@@ -62,7 +64,7 @@ public class PlayerController : MonoBehaviour
         {
             if (!crouch && Input.GetButton("Jump"))
             {
-                velocity.y = jumpForce * Time.deltaTime;
+                velocity.y = jumpForce * Time.fixedDeltaTime;
                 // 跳跃状态切换
                 jumpSound.Play();
                 _animator.SetBool(Jumping, true);
@@ -98,6 +100,19 @@ public class PlayerController : MonoBehaviour
         _rb.velocity = velocity;
     }
 
+    private void CheckDeath()
+    {
+        if (transform.position.y < _deadLineY)
+        {
+            Invoke(nameof(ReloadScene), 2f);
+        }
+    }
+
+    private void ReloadScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
     private bool CanStandUp()
     {
         return !Physics2D.OverlapBox(_box.bounds.center, _box.size, 0, groundMask);
@@ -112,9 +127,9 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.CompareTag("Collections"))
         {
-            Destroy(collision.gameObject);
             collectSound.Play();
-            _scoreController.AddScore(1);
+            var collectibles = collision.gameObject.GetComponent<Collectibles>();
+            collectibles.Collect();
         }
     }
 
@@ -124,11 +139,11 @@ public class PlayerController : MonoBehaviour
         if (target.CompareTag("Enemies"))
         {
             var velocity = _rb.velocity;
-            if (_animator.GetBool(Failing))
+            if (!_hurting && _animator.GetBool(Failing))
             {
+                target.GetComponent<Enemy>().Death();
                 // 击败敌人
                 hitSound.Play();
-                target.GetComponent<Enemy>().Death();
                 velocity.y = jumpForce * Time.deltaTime;
                 // 跳跃
                 _animator.SetBool(Failing, false);
@@ -136,11 +151,11 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
+                _hurting = true;
+                _animator.SetTrigger(Hurt);
                 // 玩家受伤
                 hurtSound.Play();
-                _animator.SetTrigger(Hurt);
-                _hurting = true;
-                velocity.x = (target.transform.localPosition.x > _rb.position.x ? -1 : 1) * moveSpeed * Time.deltaTime;
+                velocity.x = (target.transform.localPosition.x > _rb.position.x ? -1 : 1) * moveSpeed  * Time.deltaTime;
                 velocity.y = jumpForce * 0.2f * Time.deltaTime;
             }
 

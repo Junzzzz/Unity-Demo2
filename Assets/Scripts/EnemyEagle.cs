@@ -1,12 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class EnemyEagle : Enemy
 {
     public float moveSpeed;
 
-    private Rigidbody2D _rb;
     private float _topX;
     private float _bottomX;
     private int _direction = 1;
@@ -14,7 +9,6 @@ public class EnemyEagle : Enemy
     protected override void Start()
     {
         base.Start();
-        _rb = GetComponent<Rigidbody2D>();
         
         var top = transform.GetChild(0);
         var bottom = transform.GetChild(1);
@@ -32,14 +26,9 @@ public class EnemyEagle : Enemy
         Destroy(bottom.gameObject);
     }
 
-    private void FixedUpdate()
+    protected override void Movement()
     {
-        Movement();
-    }
-
-    private void Movement()
-    {
-        var posY = _rb.position.y;
+        var posY = Rb.position.y;
 
         if (posY > _topX)
         {
@@ -50,8 +39,8 @@ public class EnemyEagle : Enemy
             _direction = 1;
         }
 
-        var velocity = _rb.velocity;
+        var velocity = Rb.velocity;
         velocity.y = _direction * moveSpeed;
-        _rb.velocity = velocity;
+        Rb.velocity = velocity;
     }
 }
